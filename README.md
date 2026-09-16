@@ -7,7 +7,7 @@ Projeto de Banco de Dados NP1 - Sistema de Biblioteca com CRUD.
  * Integrantes:
  
  * Nome: Adryel Miranda da silva - RA: R803Fj8 - Turma:CC4P17
- * Nome: Matheus dos Santos Ribeiro Aguiar - RA: H785480 - Turna:CC3P17
+ * Nome: Matheus dos Santos Ribeiro Aguiar - RA: H785480 - Turma:CC3P17
  * Nome: Gabriel Barbosa Rodrigues - RA: R852HH7 - Turma: CC4P17
  * Nome: Guilherme Cares Oliveira - RA: R856585 - Turma: CC4P17
 
