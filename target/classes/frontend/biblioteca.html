@@ -1,0 +1,1355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sistema de Biblioteca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+
+:root{
+  --ink:        #24303B;
+  --ink-2:      #1B2530;
+  --paper:      #EEE4CE;
+  --panel:      #FBF7EC;
+  --panel-2:    #F4EDDC;
+  --line:       #CBB989;
+  --line-soft:  #DED0A9;
+  --brass:      #93701F;
+  --brass-deep: #6E5417;
+  --stamp:      #8A3A32;
+  --stamp-deep: #6F2D27;
+  --shelf:      #3D5A47;
+  --shelf-deep: #2E4536;
+  --text:       #241F17;
+  --text-muted: #6B6150;
+  --font-display: "Fraunces", "Iowan Old Style", "Georgia", serif;
+  --font-body: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+:root:not([data-theme="light"]){
+  /* keep light palette as base; page is intentionally a warm reading-room look
+     regardless of OS scheme, but we still respect prefers-color-scheme below
+     for people who need a dark surface. */
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:      #171512;
+    --panel:      #221E19;
+    --panel-2:    #2A241D;
+    --line:       #46402F;
+    --line-soft:  #322C22;
+    --text:       #EFE7D6;
+    --text-muted: #B4A98F;
+    --brass:      #D2AE55;
+    --brass-deep: #E7C876;
+    --shelf:      #6C9A7E;
+    --shelf-deep: #86B497;
+    --stamp:      #D2837A;
+    --stamp-deep: #E39E96;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:      #171512;
+  --panel:      #221E19;
+  --panel-2:    #2A241D;
+  --line:       #46402F;
+  --line-soft:  #322C22;
+  --text:       #EFE7D6;
+  --text-muted: #B4A98F;
+  --brass:      #D2AE55;
+  --brass-deep: #E7C876;
+  --shelf:      #6C9A7E;
+  --shelf-deep: #86B497;
+  --stamp:      #D2837A;
+  --stamp-deep: #E39E96;
+}
+
+*{ box-sizing: border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+h1,h2,h3,.brand-title{ font-family: var(--font-display); color: var(--text); margin:0; }
+button{ font-family: inherit; }
+a{ color: var(--brass-deep); }
+
+/* ---------- shell layout ---------- */
+.app-shell{ display:flex; min-height:100vh; }
+
+.sidebar{
+  width: 236px;
+  flex: 0 0 236px;
+  background: var(--ink);
+  color: #EAE3D2;
+  display:flex;
+  flex-direction:column;
+  padding: 28px 20px 20px;
+  position: sticky;
+  top:0;
+  height:100vh;
+}
+.brand{ display:flex; align-items:center; gap:12px; padding-bottom:26px; border-bottom:1px solid rgba(234,227,210,.16); margin-bottom:22px; }
+.brand svg{ flex:0 0 auto; }
+.brand-title{ display:block; font-size:1.28rem; color:#F4EEDD; line-height:1.1; }
+.brand-sub{ display:block; font-size:.72rem; letter-spacing:.02em; color:#B8AE93; margin-top:3px; }
+
+.side-nav{ display:flex; flex-direction:column; gap:4px; }
+.nav-item{
+  display:flex; align-items:center; gap:11px;
+  background:none; border:none; text-align:left;
+  color:#CFC6AC; padding:10px 12px; border-radius:6px;
+  font-size:.94rem; cursor:pointer;
+  border-left: 3px solid transparent;
+  transition: background-color .15s ease, color .15s ease;
+}
+.nav-item .ic{ width:18px; height:18px; flex:0 0 18px; opacity:.85; }
+.nav-item:hover{ background: rgba(234,227,210,.08); color:#F4EEDD; }
+.nav-item.active{ background: rgba(234,227,210,.1); color:#F7EFD6; border-left-color: var(--brass); }
+
+.sidebar-foot{ margin-top:auto; padding-top:18px; border-top:1px solid rgba(234,227,210,.14); }
+.reset-link{
+  background:none; border:none; color:#9C927A; font-size:.78rem;
+  padding:0; cursor:pointer; text-decoration: underline dotted;
+  text-underline-offset:3px;
+}
+.reset-link:hover{ color:#E7DBBB; }
+
+.content{ flex:1; padding: 38px 44px 60px; max-width: 1180px; }
+
+.view{ display:none; }
+.view.active{ display:block; animation: fade-in .28s ease; }
+@keyframes fade-in{ from{ opacity:0; transform: translateY(4px);} to{ opacity:1; transform:none; } }
+
+.view-head{ margin-bottom: 26px; max-width: 640px; }
+.view-head h1{ font-size: 2rem; font-weight:600; }
+.view-head p{ margin: 6px 0 0; color: var(--text-muted); font-size:.95rem; }
+
+/* ---------- stat cards (painel) ---------- */
+.stat-grid{ display:grid; grid-template-columns: repeat(4, 1fr); gap:16px; margin-bottom: 30px; }
+.stat-card{
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-top: 3px solid var(--brass);
+  padding: 18px 18px 16px;
+  border-radius: 4px;
+}
+.stat-value{ display:block; font-family: var(--font-display); font-size: 2.1rem; font-weight:600; line-height:1; }
+.stat-label{ display:block; margin-top:8px; font-size:.82rem; color: var(--text-muted); }
+
+.panel-row{ display:grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+@media (max-width: 900px){ .panel-row{ grid-template-columns: 1fr; } .stat-grid{ grid-template-columns: repeat(2,1fr);} }
+
+.ledger-panel{ background: var(--panel); border:1px solid var(--line-soft); border-radius:4px; padding: 18px 20px 8px; }
+.ledger-panel h2{ font-size:1.05rem; font-weight:600; margin-bottom: 8px; }
+.ledger{ display:flex; flex-direction:column; }
+.ledger-row{ display:flex; justify-content:space-between; gap:14px; padding: 10px 0; border-bottom: 1px solid var(--line-soft); font-size:.88rem; }
+.ledger-row:last-child{ border-bottom:none; }
+.ledger-row .lr-main{ min-width:0; }
+.ledger-row .lr-title{ font-weight:600; }
+.ledger-row .lr-sub{ color: var(--text-muted); font-size:.8rem; margin-top:1px; }
+.ledger-row .lr-date{ white-space:nowrap; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- toolbar ---------- */
+.toolbar{ display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.search-input{
+  flex: 1 1 260px; max-width: 360px;
+  background: var(--panel); border:1px solid var(--line); border-radius:4px;
+  padding: 9px 12px; font-size:.9rem; color:var(--text);
+}
+.search-input:focus{ outline:none; border-color: var(--brass); box-shadow: 0 0 0 3px rgba(147,112,31,.15); }
+
+.btn-stamp{
+  background: var(--stamp); color:#FBF3E9; border: 1px solid var(--stamp-deep);
+  padding: 9px 18px; border-radius: 4px; font-weight:600; font-size:.88rem;
+  cursor:pointer; letter-spacing:.01em;
+  transition: transform .1s ease, background-color .15s ease;
+}
+.btn-stamp:hover{ background: var(--stamp-deep); }
+.btn-stamp:active{ transform: scale(.98); }
+.btn-stamp:disabled{ opacity:.5; cursor:not-allowed; }
+
+.btn-quiet{
+  background:none; border:1px solid var(--line); color: var(--text);
+  padding: 8px 14px; border-radius:4px; font-size:.85rem; cursor:pointer;
+}
+.btn-quiet:hover{ background: var(--panel-2); }
+
+/* ---------- tables ---------- */
+.table-wrap{ background: var(--panel); border:1px solid var(--line-soft); border-radius:4px; overflow:hidden; }
+table.ledger-table{ width:100%; border-collapse: collapse; font-size: .88rem; }
+table.ledger-table thead th{
+  text-align:left; font-family: var(--font-body); font-weight:600;
+  color: var(--text-muted); font-size:.74rem; letter-spacing:.03em;
+  padding: 12px 16px; border-bottom: 2px solid var(--brass);
+  background: var(--panel-2);
+}
+table.ledger-table tbody td{ padding: 11px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+table.ledger-table tbody tr:last-child td{ border-bottom:none; }
+table.ledger-table tbody tr:hover{ background: rgba(147,112,31,.06); }
+.col-actions{ text-align:right; white-space:nowrap; }
+
+.tag-id{
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size:.76rem; color: var(--text-muted);
+  background: var(--panel-2); border:1px solid var(--line-soft);
+  padding: 2px 7px; border-radius: 3px;
+}
+
+.icon-btn{
+  background:none; border:none; cursor:pointer; padding:5px 7px;
+  color: var(--text-muted); border-radius:4px;
+}
+.icon-btn:hover{ background: var(--panel-2); color: var(--text); }
+.icon-btn.danger:hover{ color: var(--stamp-deep); }
+.icon-btn svg{ width:16px; height:16px; display:block; }
+
+.badge-status{
+  display:inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size:.74rem; font-weight:600; border:1px solid transparent;
+}
+.badge-ativo{ background: rgba(61,90,71,.14); color: var(--shelf-deep); border-color: rgba(61,90,71,.3); }
+.badge-atrasado{ background: rgba(138,58,50,.14); color: var(--stamp-deep); border-color: rgba(138,58,50,.32); }
+.badge-devolvido{ background: rgba(107,97,80,.14); color: var(--text-muted); border-color: rgba(107,97,80,.28); }
+
+.empty-state{ text-align:center; color: var(--text-muted); padding: 34px 20px; font-size:.9rem; }
+
+/* ---------- modals ---------- */
+.modal-content{ background: var(--panel); border:1px solid var(--line); border-radius:6px; }
+.modal-header{ border-bottom:1px solid var(--line-soft); padding: 18px 22px; }
+.modal-header .modal-title{ font-size:1.25rem; font-weight:600; }
+.modal-body{ padding: 20px 22px; }
+.modal-footer{ border-top:1px solid var(--line-soft); padding: 14px 22px; }
+.btn-close{ opacity:.6; }
+
+.form-label{ font-size:.83rem; font-weight:600; color: var(--text); margin-bottom:4px; }
+.form-control, .form-select{
+  background: var(--panel-2); border:1px solid var(--line); color: var(--text);
+  font-size:.9rem; border-radius:4px;
+}
+.form-control:focus, .form-select:focus{
+  background: var(--panel-2); color: var(--text); border-color: var(--brass);
+  box-shadow: 0 0 0 3px rgba(147,112,31,.15);
+}
+.form-text{ font-size:.76rem; color: var(--text-muted); }
+.field-hint-row{ display:flex; justify-content:space-between; }
+
+.form-alert{
+  border:1px solid rgba(138,58,50,.35); background: rgba(138,58,50,.09);
+  color: var(--stamp-deep); border-radius:4px; padding: 10px 13px; font-size:.85rem;
+  margin-bottom: 16px; display:none;
+}
+.form-alert.show{ display:block; }
+
+.btn-primary-stamp{
+  background: var(--stamp); border:1px solid var(--stamp-deep); color:#FBF3E9;
+  font-weight:600; padding: 8px 18px; border-radius:4px; font-size:.88rem;
+}
+.btn-primary-stamp:hover{ background: var(--stamp-deep); color:#fff; }
+.btn-ghost{ background:none; border:1px solid var(--line); color:var(--text); padding:8px 16px; border-radius:4px; font-size:.88rem; }
+.btn-ghost:hover{ background: var(--panel-2); }
+
+.avail-note{ font-size:.78rem; margin-top:5px; color: var(--text-muted); }
+.avail-note.warn{ color: var(--stamp-deep); }
+
+/* ---------- toasts ---------- */
+.toast-stack{ position: fixed; right: 20px; bottom: 20px; z-index: 1200; display:flex; flex-direction:column; gap:10px; width: 320px; }
+.toast-card{
+  background: var(--ink); color:#F4EEDD; border-radius: 5px; padding: 12px 14px;
+  border-left: 4px solid var(--shelf); box-shadow: 0 8px 20px rgba(0,0,0,.22);
+  font-size:.86rem; display:flex; gap:10px; align-items:flex-start;
+  animation: toast-in .22s ease;
+}
+.toast-card.err{ border-left-color: var(--stamp); }
+.toast-card .tc-ic{ flex:0 0 auto; margin-top:1px; }
+.toast-card .tc-close{ margin-left:auto; background:none; border:none; color:#B8AE93; cursor:pointer; font-size:1rem; line-height:1; padding:0 2px;}
+.toast-card .tc-close:hover{ color:#F4EEDD; }
+@keyframes toast-in{ from{ opacity:0; transform: translateX(14px);} to{ opacity:1; transform:none; } }
+
+/* ---------- misc ---------- */
+.scope-note{
+  margin-top: 34px; padding-top:16px; border-top:1px dashed var(--line);
+  color: var(--text-muted); font-size:.78rem; max-width: 640px;
+}
+
+::selection{ background: rgba(147,112,31,.3); }
+
+@media (max-width: 760px){
+  .app-shell{ flex-direction:column; }
+  .sidebar{ position:relative; width:100%; height:auto; flex-direction:row; align-items:center; padding:16px 18px; }
+  .brand{ border:none; padding:0; margin:0; }
+  .brand-sub{ display:none; }
+  .side-nav{ flex-direction:row; margin-left:auto; }
+  .nav-item{ border-left:none; border-bottom:3px solid transparent; }
+  .nav-item.active{ border-bottom-color: var(--brass); }
+  .sidebar-foot{ display:none; }
+  .content{ padding: 24px 18px 60px; }
+  .stat-grid{ grid-template-columns: repeat(2,1fr); }
+  table.ledger-table{ font-size:.82rem; }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .view.active, .toast-card{ animation:none; }
+}
+</style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+        <path d="M3 5.2c2.4-1 5-1.2 7.2.2v13.4C8 17.4 5.4 17.6 3 18.6V5.2Z" fill="#E7C876" opacity=".92"/>
+        <path d="M21 5.2c-2.4-1-5-1.2-7.2.2v13.4c2.2-1.4 4.8-1.2 7.2-.2V5.2Z" fill="#F4EEDD"/>
+        <path d="M10.2 5.4v13.4M13.8 5.4v13.4" stroke="#1B2530" stroke-width=".6" opacity=".5"/>
+      </svg>
+      <span>
+        <span class="brand-title">Biblioteca</span>
+        <span class="brand-sub">Acervo &amp; empréstimos</span>
+      </span>
+    </div>
+    <nav class="side-nav">
+      <button class="nav-item active" data-view="painel" type="button">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="3.5" width="7" height="7" rx="1"/><rect x="13.5" y="3.5" width="7" height="7" rx="1"/><rect x="3.5" y="13.5" width="7" height="7" rx="1"/><rect x="13.5" y="13.5" width="7" height="7" rx="1"/></svg>
+        Painel
+      </button>
+      <button class="nav-item" data-view="livros" type="button">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4.5h8a2 2 0 0 1 2 2V20a2.5 2.5 0 0 0-2.5-2.5H4V4.5Z"/><path d="M20 4.5h-8a2 2 0 0 0-2 2V20a2.5 2.5 0 0 1 2.5-2.5H20V4.5Z"/></svg>
+        Acervo
+      </button>
+      <button class="nav-item" data-view="usuarios" type="button">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>
+        Leitores
+      </button>
+      <button class="nav-item" data-view="emprestimos" type="button">
+        <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 6.5h11.5a3.5 3.5 0 0 1 0 7H8"/><path d="M10.7 10.6 7.8 13.5l2.9 2.9"/></svg>
+        Empréstimos
+      </button>
+    </nav>
+    <div class="sidebar-foot">
+      
+    </div>
+  </aside>
+
+  <main class="content">
+
+    <!-- ===================== PAINEL ===================== -->
+    <section class="view active" id="view-painel">
+      <header class="view-head">
+        <h1>Painel</h1>
+        <p>Visão geral do acervo e dos empréstimos em andamento.</p>
+      </header>
+
+      <div class="stat-grid">
+        <div class="stat-card"><span class="stat-value" id="stat-titulos">0</span><span class="stat-label">Títulos no acervo</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-exemplares">0</span><span class="stat-label">Exemplares disponíveis</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-leitores">0</span><span class="stat-label">Leitores cadastrados</span></div>
+        <div class="stat-card"><span class="stat-value" id="stat-ativos">0</span><span class="stat-label">Empréstimos ativos</span></div>
+      </div>
+
+      <div class="panel-row">
+        <div class="ledger-panel">
+          <h2>Devoluções atrasadas</h2>
+          <div class="ledger" id="painel-atrasados"></div>
+        </div>
+        <div class="ledger-panel">
+          <h2>Últimos empréstimos</h2>
+          <div class="ledger" id="painel-recentes"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== LIVROS ===================== -->
+    <section class="view" id="view-livros">
+      <header class="view-head">
+        <h1>Acervo</h1>
+        <p>Cadastre, edite e consulte os livros disponíveis para empréstimo.</p>
+      </header>
+
+      <div class="toolbar">
+        <input type="search" class="search-input" id="busca-livros" placeholder="Buscar por título ou autor…">
+        <button class="btn-stamp" id="btn-novo-livro" type="button">+ Novo livro</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Cód.</th><th>Título</th><th>Autor</th><th>Ano</th><th>Exemplares</th><th>Disponíveis</th><th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-livros"></tbody>
+        </table>
+        <p class="empty-state" id="livros-vazio" hidden>Nenhum livro encontrado.</p>
+      </div>
+    </section>
+
+    <!-- ===================== USUÁRIOS ===================== -->
+    <section class="view" id="view-usuarios">
+      <header class="view-head">
+        <h1>Leitores</h1>
+        <p>Cadastre e mantenha os dados de contato dos leitores da biblioteca.</p>
+      </header>
+
+      <div class="toolbar">
+        <input type="search" class="search-input" id="busca-usuarios" placeholder="Buscar por nome ou e-mail…">
+        <button class="btn-stamp" id="btn-novo-usuario" type="button">+ Novo leitor</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Cód.</th><th>Nome</th><th>E-mail</th><th>Telefone</th><th>Cadastro</th><th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-usuarios"></tbody>
+        </table>
+        <p class="empty-state" id="usuarios-vazio" hidden>Nenhum leitor encontrado.</p>
+      </div>
+    </section>
+
+    <!-- ===================== EMPRÉSTIMOS ===================== -->
+    <section class="view" id="view-emprestimos">
+      <header class="view-head">
+        <h1>Empréstimos</h1>
+        <p>Registre novos empréstimos e controle as devoluções.</p>
+      </header>
+
+      <div class="toolbar">
+        <input type="search" class="search-input" id="busca-emprestimos" placeholder="Buscar por leitor ou título…">
+        <button class="btn-stamp" id="btn-novo-emprestimo" type="button">+ Novo empréstimo</button>
+      </div>
+
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th>Cód.</th><th>Leitor</th><th>Livro</th><th>Empréstimo</th><th>Devolução prevista</th><th>Devolução real</th><th>Status</th><th class="col-actions"></th>
+            </tr>
+          </thead>
+          <tbody id="tbody-emprestimos"></tbody>
+        </table>
+        <p class="empty-state" id="emprestimos-vazio" hidden>Nenhum empréstimo encontrado.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===================== MODAL: LIVRO ===================== -->
+<div class="modal fade" id="modal-livro" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-livro" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-livro-titulo">Novo livro</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-alert" id="livro-alert"></div>
+          <input type="hidden" id="livro-id">
+
+          <div class="mb-3">
+            <label class="form-label" for="livro-titulo">Título</label>
+            <input type="text" class="form-control" id="livro-titulo" maxlength="150" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="livro-autor">Autor</label>
+            <input type="text" class="form-control" id="livro-autor" maxlength="100" required>
+          </div>
+
+          <div class="row">
+            <div class="col-4 mb-3">
+              <label class="form-label" for="livro-ano">Ano de publicação</label>
+              <input type="number" class="form-control" id="livro-ano" min="0" required>
+            </div>
+            <div class="col-4 mb-3">
+              <label class="form-label" for="livro-total">Exemplares</label>
+              <input type="number" class="form-control" id="livro-total" min="0" required>
+            </div>
+            <div class="col-4 mb-3">
+              <label class="form-label" for="livro-disponivel">Disponíveis</label>
+              <input type="number" class="form-control" id="livro-disponivel" min="0" required>
+            </div>
+          </div>
+          <p class="form-text">A quantidade disponível não pode ser maior que o total de exemplares.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn-primary-stamp">Salvar livro</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: USUÁRIO ===================== -->
+<div class="modal fade" id="modal-usuario" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-usuario" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title" id="modal-usuario-titulo">Novo leitor</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-alert" id="usuario-alert"></div>
+          <input type="hidden" id="usuario-id">
+
+          <div class="mb-3">
+            <label class="form-label" for="usuario-nome">Nome</label>
+            <input type="text" class="form-control" id="usuario-nome" maxlength="100" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="usuario-email">E-mail</label>
+            <input type="email" class="form-control" id="usuario-email" maxlength="100" required>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="usuario-telefone">Telefone <span class="form-text">(opcional)</span></label>
+            <input type="text" class="form-control" id="usuario-telefone" maxlength="20">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn-primary-stamp">Salvar leitor</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: EMPRÉSTIMO ===================== -->
+<div class="modal fade" id="modal-emprestimo" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="form-emprestimo" novalidate>
+        <div class="modal-header">
+          <h2 class="modal-title">Novo empréstimo</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-alert" id="emprestimo-alert"></div>
+
+          <div class="mb-3">
+            <label class="form-label" for="emprestimo-usuario">Leitor</label>
+            <select class="form-select" id="emprestimo-usuario" required></select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="emprestimo-livro">Livro</label>
+            <select class="form-select" id="emprestimo-livro" required></select>
+            <div class="avail-note" id="emprestimo-disponibilidade"></div>
+          </div>
+
+          <div class="mb-2">
+            <label class="form-label" for="emprestimo-data">Devolução prevista</label>
+            <input type="date" class="form-control" id="emprestimo-data" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn-primary-stamp">Registrar empréstimo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: CONFIRMAÇÃO ===================== -->
+<div class="modal fade" id="modal-confirm" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="confirm-titulo">Confirmar ação</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p id="confirm-texto" style="margin:0;"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn-primary-stamp" id="confirm-ok">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+<script>
+/*
+ * Sistema de Biblioteca
+ * Front-end: HTML5, CSS3, JavaScript, jQuery e Bootstrap.
+ * Persistência: realizada pelo back-end Java e SQL Server.
+ * Comunicação: requisições HTTP para a API local do sistema.
+ */
+(function () {
+  "use strict";
+
+  var API = "/api";
+
+  var cache = {
+    livros: [],
+    usuarios: [],
+    emprestimos: []
+  };
+
+  function hoje() {
+    var d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }
+
+  function paraData(str) {
+    if (!str) return null;
+    var partes = str.split("-");
+    return new Date(
+      parseInt(partes[0], 10),
+      parseInt(partes[1], 10) - 1,
+      parseInt(partes[2], 10)
+    );
+  }
+
+  function paraISO(date) {
+    if (!date) return null;
+    var y = date.getFullYear();
+    var m = String(date.getMonth() + 1).padStart(2, "0");
+    var d = String(date.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + d;
+  }
+
+  function formatarData(iso) {
+    if (!iso) return "—";
+    var d = paraData(iso);
+    return String(d.getDate()).padStart(2, "0") + "/" +
+           String(d.getMonth() + 1).padStart(2, "0") + "/" +
+           d.getFullYear();
+  }
+
+  function escapeHtml(str) {
+    return String(str == null ? "" : str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function estaAtrasado(e) {
+    return e.status !== "Devolvido" &&
+           e.dataDevolucaoPrevista &&
+           paraData(e.dataDevolucaoPrevista) < hoje();
+  }
+
+  async function requisicao(url, opcoes) {
+    var resposta;
+
+    try {
+      resposta = await fetch(url, opcoes);
+    } catch (e) {
+      throw new Error(
+        "Não foi possível conectar ao servidor Java. Verifique se o sistema está em execução."
+      );
+    }
+
+    var texto = await resposta.text();
+    var dados = null;
+
+    if (texto) {
+      try {
+        dados = JSON.parse(texto);
+      } catch (e) {
+        dados = texto;
+      }
+    }
+
+    if (!resposta.ok) {
+      var mensagem = dados && dados.mensagem
+        ? dados.mensagem
+        : (typeof dados === "string" && dados ? dados : "Erro ao processar a solicitação.");
+      throw new Error(mensagem);
+    }
+
+    return dados;
+  }
+
+  var Api = {
+    listarLivros: function () {
+      return requisicao(API + "/livros");
+    },
+
+    cadastrarLivro: function (livro) {
+      return requisicao(API + "/livros", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        body: new URLSearchParams(livro).toString()
+      });
+    },
+
+    atualizarLivro: function (livro) {
+      return requisicao(API + "/livros/" + livro.idLivro, {
+        method: "PUT",
+        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        body: new URLSearchParams(livro).toString()
+      });
+    },
+
+    excluirLivro: function (id) {
+      return requisicao(API + "/livros/" + id, { method: "DELETE" });
+    },
+
+    listarUsuarios: function () {
+      return requisicao(API + "/usuarios");
+    },
+
+    cadastrarUsuario: function (usuario) {
+      return requisicao(API + "/usuarios", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        body: new URLSearchParams(usuario).toString()
+      });
+    },
+
+    atualizarUsuario: function (usuario) {
+      return requisicao(API + "/usuarios/" + usuario.idUsuario, {
+        method: "PUT",
+        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        body: new URLSearchParams(usuario).toString()
+      });
+    },
+
+    excluirUsuario: function (id) {
+      return requisicao(API + "/usuarios/" + id, { method: "DELETE" });
+    },
+
+    listarEmprestimos: function () {
+      return requisicao(API + "/emprestimos");
+    },
+
+    realizarEmprestimo: function (emprestimo) {
+      return requisicao(API + "/emprestimos", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+        body: new URLSearchParams(emprestimo).toString()
+      });
+    },
+
+    devolverLivro: function (id) {
+      return requisicao(API + "/emprestimos/" + id + "/devolucao", {
+        method: "PUT"
+      });
+    }
+  };
+
+  $(function () {
+    bindNavegacao();
+    bindFormLivro();
+    bindFormUsuario();
+    bindFormEmprestimo();
+    bindBusca();
+    bindConfirmacao();
+
+    carregarTudo();
+  });
+
+  async function carregarTudo() {
+    try {
+      var resultados = await Promise.all([
+        Api.listarLivros(),
+        Api.listarUsuarios(),
+        Api.listarEmprestimos()
+      ]);
+
+      cache.livros = Array.isArray(resultados[0]) ? resultados[0] : [];
+      cache.usuarios = Array.isArray(resultados[1]) ? resultados[1] : [];
+      cache.emprestimos = Array.isArray(resultados[2]) ? resultados[2] : [];
+
+      renderTudo();
+    } catch (e) {
+      toast(e.message, true);
+    }
+  }
+
+  function renderTudo() {
+    renderPainel();
+    renderLivros($("#busca-livros").val() || "");
+    renderUsuarios($("#busca-usuarios").val() || "");
+    renderEmprestimos($("#busca-emprestimos").val() || "");
+  }
+
+  function bindNavegacao() {
+    $(".nav-item").on("click", function () {
+      var alvo = $(this).data("view");
+      $(".nav-item").removeClass("active");
+      $(this).addClass("active");
+      $(".view").removeClass("active");
+      $("#view-" + alvo).addClass("active");
+    });
+  }
+
+  function bindBusca() {
+    $("#busca-livros").on("input", function () {
+      renderLivros($(this).val());
+    });
+
+    $("#busca-usuarios").on("input", function () {
+      renderUsuarios($(this).val());
+    });
+
+    $("#busca-emprestimos").on("input", function () {
+      renderEmprestimos($(this).val());
+    });
+  }
+
+  function renderPainel() {
+    var livros = cache.livros;
+    var usuarios = cache.usuarios;
+    var emprestimos = cache.emprestimos;
+
+    $("#stat-titulos").text(livros.length);
+
+    $("#stat-exemplares").text(
+      livros.reduce(function (s, l) {
+        return s + Number(l.quantidadeDisponivel || 0);
+      }, 0)
+    );
+
+    $("#stat-leitores").text(usuarios.length);
+
+    $("#stat-ativos").text(
+      emprestimos.filter(function (e) {
+        return e.status !== "Devolvido";
+      }).length
+    );
+
+    var atrasados = emprestimos.filter(estaAtrasado);
+    var $atr = $("#painel-atrasados").empty();
+
+    if (!atrasados.length) {
+      $atr.append(
+        '<p class="empty-state" style="padding:16px 0;">Nenhuma devolução atrasada no momento.</p>'
+      );
+    } else {
+      atrasados.forEach(function (e) {
+        $atr.append(
+          '<div class="ledger-row">' +
+            '<div class="lr-main">' +
+              '<div class="lr-title">' + escapeHtml(e.tituloLivro) + '</div>' +
+              '<div class="lr-sub">' + escapeHtml(e.nomeUsuario) + '</div>' +
+            '</div>' +
+            '<div class="lr-date">venceu em ' +
+              formatarData(e.dataDevolucaoPrevista) +
+            '</div>' +
+          '</div>'
+        );
+      });
+    }
+
+    var recentes = emprestimos.slice().sort(function (a, b) {
+      return Number(b.idEmprestimo) - Number(a.idEmprestimo);
+    }).slice(0, 5);
+
+    var $rec = $("#painel-recentes").empty();
+
+    if (!recentes.length) {
+      $rec.append(
+        '<p class="empty-state" style="padding:16px 0;">Nenhum empréstimo registrado ainda.</p>'
+      );
+    } else {
+      recentes.forEach(function (e) {
+        $rec.append(
+          '<div class="ledger-row">' +
+            '<div class="lr-main">' +
+              '<div class="lr-title">' + escapeHtml(e.tituloLivro) + '</div>' +
+              '<div class="lr-sub">' + escapeHtml(e.nomeUsuario) + '</div>' +
+            '</div>' +
+            '<div class="lr-date">' + formatarData(e.dataEmprestimo) + '</div>' +
+          '</div>'
+        );
+      });
+    }
+  }
+
+  function renderLivros(filtro) {
+    var termo = (filtro || "").trim().toLowerCase();
+
+    var livros = cache.livros.filter(function (l) {
+      return !termo ||
+        String(l.titulo || "").toLowerCase().indexOf(termo) > -1 ||
+        String(l.autor || "").toLowerCase().indexOf(termo) > -1;
+    });
+
+    livros.sort(function (a, b) {
+      return String(a.titulo).localeCompare(String(b.titulo), "pt-BR");
+    });
+
+    var $tbody = $("#tbody-livros").empty();
+    $("#livros-vazio").prop("hidden", livros.length > 0);
+
+    livros.forEach(function (l) {
+      var $tr = $(
+        '<tr>' +
+          '<td><span class="tag-id">L' + String(l.idLivro).padStart(3, "0") + '</span></td>' +
+          '<td>' + escapeHtml(l.titulo) + '</td>' +
+          '<td>' + escapeHtml(l.autor) + '</td>' +
+          '<td>' + (l.anoPublicacao || "—") + '</td>' +
+          '<td>' + l.quantidadeTotal + '</td>' +
+          '<td>' + l.quantidadeDisponivel + '</td>' +
+          '<td class="col-actions">' +
+            '<button class="icon-btn" data-acao="editar-livro" title="Editar">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' +
+                '<path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/>' +
+              '</svg>' +
+            '</button>' +
+            '<button class="icon-btn danger" data-acao="excluir-livro" title="Excluir">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' +
+                '<path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m1 0-1 13a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1L8 7"/>' +
+              '</svg>' +
+            '</button>' +
+          '</td>' +
+        '</tr>'
+      );
+
+      $tr.data("id", l.idLivro);
+      $tbody.append($tr);
+    });
+  }
+
+  function bindFormLivro() {
+    $("#btn-novo-livro").on("click", function () {
+      abrirModalLivro(null);
+    });
+
+    $("#tbody-livros").on("click", '[data-acao="editar-livro"]', function () {
+      var id = Number($(this).closest("tr").data("id"));
+      var livro = cache.livros.find(function (l) {
+        return Number(l.idLivro) === id;
+      });
+      abrirModalLivro(livro);
+    });
+
+    $("#tbody-livros").on("click", '[data-acao="excluir-livro"]', function () {
+      var id = Number($(this).closest("tr").data("id"));
+      var livro = cache.livros.find(function (l) {
+        return Number(l.idLivro) === id;
+      });
+
+      if (!livro) return;
+
+      confirmar(
+        "Excluir livro",
+        'Tem certeza de que deseja excluir "' + livro.titulo + '" do acervo?',
+        async function () {
+          try {
+            await Api.excluirLivro(id);
+            toast("Livro excluído com sucesso!", false);
+            await carregarTudo();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        }
+      );
+    });
+
+    $("#form-livro").on("submit", async function (ev) {
+      ev.preventDefault();
+
+      var id = $("#livro-id").val();
+
+      var livro = {
+        titulo: $("#livro-titulo").val().trim(),
+        autor: $("#livro-autor").val().trim(),
+        anoPublicacao: parseInt($("#livro-ano").val(), 10),
+        quantidadeTotal: parseInt($("#livro-total").val(), 10),
+        quantidadeDisponivel: parseInt($("#livro-disponivel").val(), 10)
+      };
+
+      try {
+        if (id) {
+          livro.idLivro = parseInt(id, 10);
+          await Api.atualizarLivro(livro);
+          toast("Livro atualizado com sucesso!", false);
+        } else {
+          await Api.cadastrarLivro(livro);
+          toast("Livro cadastrado com sucesso!", false);
+        }
+
+        $("#modal-livro").modal("hide");
+        await carregarTudo();
+      } catch (e) {
+        mostrarAlertaModal("#livro-alert", e.message);
+      }
+    });
+  }
+
+  function abrirModalLivro(livro) {
+    limparAlertaModal("#livro-alert");
+    $("#livro-id").val(livro ? livro.idLivro : "");
+    $("#livro-titulo").val(livro ? livro.titulo : "");
+    $("#livro-autor").val(livro ? livro.autor : "");
+    $("#livro-ano").val(livro ? livro.anoPublicacao : new Date().getFullYear());
+    $("#livro-total").val(livro ? livro.quantidadeTotal : 1);
+    $("#livro-disponivel").val(livro ? livro.quantidadeDisponivel : 1);
+    $("#modal-livro-titulo").text(livro ? "Editar livro" : "Novo livro");
+    $("#modal-livro").modal("show");
+  }
+
+  function renderUsuarios(filtro) {
+    var termo = (filtro || "").trim().toLowerCase();
+
+    var usuarios = cache.usuarios.filter(function (u) {
+      return !termo ||
+        String(u.nome || "").toLowerCase().indexOf(termo) > -1 ||
+        String(u.email || "").toLowerCase().indexOf(termo) > -1;
+    });
+
+    usuarios.sort(function (a, b) {
+      return String(a.nome).localeCompare(String(b.nome), "pt-BR");
+    });
+
+    var $tbody = $("#tbody-usuarios").empty();
+    $("#usuarios-vazio").prop("hidden", usuarios.length > 0);
+
+    usuarios.forEach(function (u) {
+      var $tr = $(
+        '<tr>' +
+          '<td><span class="tag-id">U' + String(u.idUsuario).padStart(3, "0") + '</span></td>' +
+          '<td>' + escapeHtml(u.nome) + '</td>' +
+          '<td>' + escapeHtml(u.email) + '</td>' +
+          '<td>' + (u.telefone ? escapeHtml(u.telefone) : "—") + '</td>' +
+          '<td>' + formatarData(u.dataCadastro) + '</td>' +
+          '<td class="col-actions">' +
+            '<button class="icon-btn" data-acao="editar-usuario" title="Editar">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' +
+                '<path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3Z"/>' +
+              '</svg>' +
+            '</button>' +
+            '<button class="icon-btn danger" data-acao="excluir-usuario" title="Excluir">' +
+              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">' +
+                '<path d="M5 7h14M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2m1 0-1 13a1 1 0 0 1-1 1H10a1 1 0 0 1-1-1L8 7"/>' +
+              '</svg>' +
+            '</button>' +
+          '</td>' +
+        '</tr>'
+      );
+
+      $tr.data("id", u.idUsuario);
+      $tbody.append($tr);
+    });
+  }
+
+  function bindFormUsuario() {
+    $("#btn-novo-usuario").on("click", function () {
+      abrirModalUsuario(null);
+    });
+
+    $("#tbody-usuarios").on("click", '[data-acao="editar-usuario"]', function () {
+      var id = Number($(this).closest("tr").data("id"));
+      var usuario = cache.usuarios.find(function (u) {
+        return Number(u.idUsuario) === id;
+      });
+      abrirModalUsuario(usuario);
+    });
+
+    $("#tbody-usuarios").on("click", '[data-acao="excluir-usuario"]', function () {
+      var id = Number($(this).closest("tr").data("id"));
+      var usuario = cache.usuarios.find(function (u) {
+        return Number(u.idUsuario) === id;
+      });
+
+      if (!usuario) return;
+
+      confirmar(
+        "Excluir leitor",
+        'Tem certeza de que deseja excluir "' + usuario.nome + '" do cadastro?',
+        async function () {
+          try {
+            await Api.excluirUsuario(id);
+            toast("Usuário excluído com sucesso!", false);
+            await carregarTudo();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        }
+      );
+    });
+
+    $("#form-usuario").on("submit", async function (ev) {
+      ev.preventDefault();
+
+      var id = $("#usuario-id").val();
+
+      var usuario = {
+        nome: $("#usuario-nome").val().trim(),
+        email: $("#usuario-email").val().trim(),
+        telefone: $("#usuario-telefone").val().trim()
+      };
+
+      try {
+        if (id) {
+          usuario.idUsuario = parseInt(id, 10);
+          await Api.atualizarUsuario(usuario);
+          toast("Usuário atualizado com sucesso!", false);
+        } else {
+          await Api.cadastrarUsuario(usuario);
+          toast("Usuário cadastrado com sucesso!", false);
+        }
+
+        $("#modal-usuario").modal("hide");
+        await carregarTudo();
+      } catch (e) {
+        mostrarAlertaModal("#usuario-alert", e.message);
+      }
+    });
+  }
+
+  function abrirModalUsuario(usuario) {
+    limparAlertaModal("#usuario-alert");
+    $("#usuario-id").val(usuario ? usuario.idUsuario : "");
+    $("#usuario-nome").val(usuario ? usuario.nome : "");
+    $("#usuario-email").val(usuario ? usuario.email : "");
+    $("#usuario-telefone").val(usuario ? usuario.telefone : "");
+    $("#modal-usuario-titulo").text(usuario ? "Editar leitor" : "Novo leitor");
+    $("#modal-usuario").modal("show");
+  }
+
+  function renderEmprestimos(filtro) {
+    var termo = (filtro || "").trim().toLowerCase();
+
+    var lista = cache.emprestimos.filter(function (e) {
+      return !termo ||
+        String(e.nomeUsuario || "").toLowerCase().indexOf(termo) > -1 ||
+        String(e.tituloLivro || "").toLowerCase().indexOf(termo) > -1;
+    });
+
+    lista.sort(function (a, b) {
+      return Number(b.idEmprestimo) - Number(a.idEmprestimo);
+    });
+
+    var $tbody = $("#tbody-emprestimos").empty();
+    $("#emprestimos-vazio").prop("hidden", lista.length > 0);
+
+    lista.forEach(function (e) {
+      var atrasado = estaAtrasado(e);
+      var statusLabel = e.status === "Devolvido"
+        ? "Devolvido"
+        : (atrasado ? "Atrasado" : "Ativo");
+
+      var statusClasse = e.status === "Devolvido"
+        ? "badge-devolvido"
+        : (atrasado ? "badge-atrasado" : "badge-ativo");
+
+      var acao = e.status === "Devolvido"
+        ? ""
+        : '<button class="btn-quiet" data-acao="devolver" title="Registrar devolução">Devolver</button>';
+
+      var $tr = $(
+        '<tr>' +
+          '<td><span class="tag-id">E' + String(e.idEmprestimo).padStart(3, "0") + '</span></td>' +
+          '<td>' + escapeHtml(e.nomeUsuario) + '</td>' +
+          '<td>' + escapeHtml(e.tituloLivro) + '</td>' +
+          '<td>' + formatarData(e.dataEmprestimo) + '</td>' +
+          '<td>' + formatarData(e.dataDevolucaoPrevista) + '</td>' +
+          '<td>' + formatarData(e.dataDevolucaoReal) + '</td>' +
+          '<td><span class="badge-status ' + statusClasse + '">' + statusLabel + '</span></td>' +
+          '<td class="col-actions">' + acao + '</td>' +
+        '</tr>'
+      );
+
+      $tr.data("id", e.idEmprestimo);
+      $tbody.append($tr);
+    });
+  }
+
+  function bindFormEmprestimo() {
+    $("#btn-novo-emprestimo").on("click", abrirModalEmprestimo);
+
+    $("#emprestimo-livro").on("change", function () {
+      var id = Number($(this).val());
+
+      var livro = cache.livros.find(function (l) {
+        return Number(l.idLivro) === id;
+      });
+
+      var $nota = $("#emprestimo-disponibilidade");
+
+      if (livro) {
+        $nota.text(
+          livro.quantidadeDisponivel + " de " +
+          livro.quantidadeTotal +
+          " exemplar(es) disponível(is)."
+        );
+
+        $nota.toggleClass("warn", Number(livro.quantidadeDisponivel) <= 0);
+      } else {
+        $nota.text("");
+      }
+    });
+
+    $("#tbody-emprestimos").on("click", '[data-acao="devolver"]', function () {
+      var id = Number($(this).closest("tr").data("id"));
+
+      confirmar(
+        "Confirmar devolução",
+        "Registrar a devolução deste exemplar e repor o estoque do livro?",
+        async function () {
+          try {
+            await Api.devolverLivro(id);
+            toast("Livro devolvido com sucesso!", false);
+            await carregarTudo();
+          } catch (e) {
+            toast(e.message, true);
+          }
+        }
+      );
+    });
+
+    $("#form-emprestimo").on("submit", async function (ev) {
+      ev.preventDefault();
+
+      var emp = {
+        idUsuario: parseInt($("#emprestimo-usuario").val(), 10),
+        idLivro: parseInt($("#emprestimo-livro").val(), 10),
+        dataDevolucaoPrevista: $("#emprestimo-data").val()
+      };
+
+      try {
+        await Api.realizarEmprestimo(emp);
+        toast("Empréstimo realizado com sucesso!", false);
+        $("#modal-emprestimo").modal("hide");
+        await carregarTudo();
+      } catch (e) {
+        mostrarAlertaModal("#emprestimo-alert", e.message);
+      }
+    });
+  }
+
+  function abrirModalEmprestimo() {
+    limparAlertaModal("#emprestimo-alert");
+
+    var usuarios = cache.usuarios.slice().sort(function (a, b) {
+      return String(a.nome).localeCompare(String(b.nome), "pt-BR");
+    });
+
+    var $selUsuario = $("#emprestimo-usuario").empty();
+
+    if (!usuarios.length) {
+      $selUsuario.append('<option value="">Nenhum leitor cadastrado</option>');
+    } else {
+      usuarios.forEach(function (u) {
+        $selUsuario.append(
+          '<option value="' + u.idUsuario + '">' +
+          escapeHtml(u.nome) +
+          '</option>'
+        );
+      });
+    }
+
+    var livros = cache.livros.slice().sort(function (a, b) {
+      return String(a.titulo).localeCompare(String(b.titulo), "pt-BR");
+    });
+
+    var $selLivro = $("#emprestimo-livro").empty();
+
+    if (!livros.length) {
+      $selLivro.append('<option value="">Nenhum livro cadastrado</option>');
+    } else {
+      livros.forEach(function (l) {
+        var qtd = Number(l.quantidadeDisponivel);
+        var rotulo =
+          l.titulo + " (" + qtd + " disponível" +
+          (qtd === 1 ? "" : "eis") + ")";
+
+        $selLivro.append(
+          '<option value="' + l.idLivro + '"' +
+          (qtd <= 0 ? " disabled" : "") +
+          '>' + escapeHtml(rotulo) + '</option>'
+        );
+      });
+    }
+
+    $selLivro.trigger("change");
+
+    var padrao = new Date();
+    padrao.setDate(padrao.getDate() + 14);
+
+    $("#emprestimo-data")
+      .attr("min", paraISO(hoje()))
+      .val(paraISO(padrao));
+
+    $("#modal-emprestimo").modal("show");
+  }
+
+  function mostrarAlertaModal(seletor, mensagem) {
+    $(seletor).text(mensagem).addClass("show");
+  }
+
+  function limparAlertaModal(seletor) {
+    $(seletor).text("").removeClass("show");
+  }
+
+  var confirmCallback = null;
+
+  function confirmar(titulo, texto, onConfirm) {
+    $("#confirm-titulo").text(titulo);
+    $("#confirm-texto").text(texto);
+    confirmCallback = onConfirm;
+    $("#modal-confirm").modal("show");
+  }
+
+  function bindConfirmacao() {
+    $("#confirm-ok").on("click", function () {
+      var cb = confirmCallback;
+      confirmCallback = null;
+      $("#modal-confirm").modal("hide");
+
+      if (cb) {
+        cb();
+      }
+    });
+  }
+
+  function toast(mensagem, isErro) {
+    var $t = $(
+      '<div class="toast-card' + (isErro ? " err" : "") + '">' +
+        '<span class="tc-ic">' +
+          (isErro
+            ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>'
+            : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.3 2.3L16 10"/></svg>') +
+        '</span>' +
+        '<span>' + escapeHtml(mensagem) + '</span>' +
+        '<button class="tc-close" aria-label="Fechar">&times;</button>' +
+      '</div>'
+    );
+
+    $t.find(".tc-close").on("click", function () {
+      $t.remove();
+    });
+
+    $("#toast-stack").append($t);
+
+    setTimeout(function () {
+      $t.fadeOut(200, function () {
+        $t.remove();
+      });
+    }, 4500);
+  }
+})();
+</script>
+</body>
+</html>

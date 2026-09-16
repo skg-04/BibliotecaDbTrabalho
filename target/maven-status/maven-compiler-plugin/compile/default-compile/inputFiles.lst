@@ -1,0 +1,14 @@
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\BibliotecaDb.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\dao\Conexao.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\dao\EmprestimoDao.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\dao\LivroDao.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\dao\UsuarioDao.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\model\Emprestimo.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\model\EmprestimoDetalhado.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\model\Livro.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\model\Usuario.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\model\Validacao.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\servidor\EmprestimoHandler.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\servidor\LivroHandler.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\servidor\Servidor.java
+C:\Users\Matheus\Documents\NetBeansProjects\BibliotecaDb\src\main\java\com\mycompany\bibliotecadb\servidor\UsuarioHandler.java

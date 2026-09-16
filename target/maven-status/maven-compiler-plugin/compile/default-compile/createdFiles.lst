@@ -1,0 +1,14 @@
+com\mycompany\bibliotecadb\model\Emprestimo.class
+com\mycompany\bibliotecadb\dao\Conexao.class
+com\mycompany\bibliotecadb\model\Validacao.class
+com\mycompany\bibliotecadb\model\Usuario.class
+com\mycompany\bibliotecadb\servidor\LivroHandler.class
+com\mycompany\bibliotecadb\dao\EmprestimoDao.class
+com\mycompany\bibliotecadb\dao\LivroDao.class
+com\mycompany\bibliotecadb\dao\UsuarioDao.class
+com\mycompany\bibliotecadb\model\EmprestimoDetalhado.class
+com\mycompany\bibliotecadb\BibliotecaDb.class
+com\mycompany\bibliotecadb\model\Livro.class
+com\mycompany\bibliotecadb\servidor\EmprestimoHandler.class
+com\mycompany\bibliotecadb\servidor\Servidor.class
+com\mycompany\bibliotecadb\servidor\UsuarioHandler.class
