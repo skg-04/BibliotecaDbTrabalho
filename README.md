@@ -904,22 +904,22 @@ Assim, o HttpServer é utilizado somente como recurso nativo do Java para recebe
 Esta seção apresenta as capturas de tela (prints) que demonstram o funcionamento da interface do sistema, a execução das operações de CRUD e a persistência dos dados no banco de dados.
 
 Figura 1 — Tela Inicial / Dashboard do Sistema
-!\[Tela do Painel](imagens/Painel.png)
+![Tela do Painel](imagens/Painel.png)
 Descrição: Visão geral da interface principal da aplicação web da biblioteca, exibindo o painel de controle com os indicadores consolidados de acervo, leitores cadastrados e empréstimos ativos em andamento.
 
 Figura 2 — Gestão do Acervo
-!\[Tela de Acervo](imagens/Livros.png)
+![Tela de Acervo](imagens/Livros.png)
 Descrição: Interface de listagem de livros. Exibe os títulos cadastrados, seus autores, quantidade de exemplares totais e disponíveis, além de disponibilizar barra de busca e botões para criar, editar e excluir registros.
 
 Figura 3 — Gestão de Leitores
-!\[Tela de Leitores](imagens/Usuario.png)
+![Tela de Leitores](imagens/Usuario.png)
 Descrição: Tela de controle de usuários. Lista os leitores cadastrados com seus respectivos dados de contato e data de cadastro, permitindo a busca, inserção, atualização e exclusão de perfis.
 
 Figura 4 — Controle de Empréstimos
-!\[Tela de Empréstimos](imagens/Empretimo.png)
+![Tela de Empréstimos](imagens/Empretimo.png)
 Descrição: Interface para registro e monitoramento de empréstimos. Demonstra o vínculo entre um leitor e um livro, acompanhando as datas de retirada, devolução prevista e o status atual da transação.
 
 Figura 5 — Registros no Banco de Dados
-!\[Persistência no Banco](imagens/Banco\_de\_Dados.png)
+![Persistência no Banco](imagens/Banco\_de\_Dados.png)
 Descrição: Consulta executada diretamente no gerenciador do banco de dados, comprovando que as informações manipuladas pela interface web (CRUD) estão sendo persistidas e armazenadas corretamente nas tabelas do sistema.
 
