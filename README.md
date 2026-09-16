@@ -916,7 +916,7 @@ Figura 3 — Gestão de Leitores
 Descrição: Tela de controle de usuários. Lista os leitores cadastrados com seus respectivos dados de contato e data de cadastro, permitindo a busca, inserção, atualização e exclusão de perfis.
 
 Figura 4 — Controle de Empréstimos
-![Tela de Empréstimos](imagens/Empretimo.png)
+![Tela de Empréstimos](imagens/Emprestimo.png)
 Descrição: Interface para registro e monitoramento de empréstimos. Demonstra o vínculo entre um leitor e um livro, acompanhando as datas de retirada, devolução prevista e o status atual da transação.
 
 Figura 5 — Registros no Banco de Dados
