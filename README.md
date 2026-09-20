@@ -21,7 +21,7 @@ O controle de estoque (quantidade de livros) é atualizado de acordo com a dispo
 
 Diagrama Entidade-Relacionamento (DER)
 Abaixo está o DER que ilustra o relacionamento conceitual e lógico entre as entidades `USUARIO`, `LIVRO` e `EMPRESTIMO`:
-!\[Diagrama Entidade-Relacionamento](DER\_BibliotecaDB.jpeg)
+![Diagrama Entidade-Relacionamento](DER\_BibliotecaDB.jpeg)
 
 Scripts DDL
 
